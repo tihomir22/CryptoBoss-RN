@@ -1,51 +1,125 @@
 import React, { Component } from "react";
-
-import { Content, Card, CardItem, Text, Body, Thumbnail } from "native-base";
+import { TouchableOpacity } from "react-native";
+import {
+  Content,
+  Card,
+  CardItem,
+  Text,
+  Body,
+  Thumbnail,
+  ActionSheet
+} from "native-base";
 import { Col, Row, Grid } from "react-native-easy-grid";
-// import { connect } from "react-redux";
-// import { bindActionCreators } from "redux";
-// import * as listItemActions from "../../store/listItem/actions";
 import estilos from "./estilos";
 import VistaPreviaHistorico from "../graficos/vistaPreviaHistorico";
-// import { connect } from "react-redux";
-// import { bindActionCreators } from "redux";
-// import * as cryptoItemActions from "../../store/cryptoItem/actions";
+import DetailsCryptoItem from "../DetailsCryptoItem/detailsCryptoItem";
+
+var BUTTONS = ["Look in depth", "Add to watchlist", "Cancel"];
+var CANCEL_INDEX = 2;
 export default class CryptoItem extends Component {
   constructor(props) {
     super(props);
-    this.state = {};
+    this.state = {
+      mostrarDescripcion: false
+    };
+    this.abrirActionShiiet = this.abrirActionShiiet.bind(this);
+    this.cerrarDetalles = this.cerrarDetalles.bind(this);
   }
+
+  pintarDependiendoDeRentabilidad(valor) {
+    if (this.devolverTipoPorcentaje(valor) == 0) {
+      return estilos.positivo;
+    } else {
+      return estilos.negativo;
+    }
+  }
+
+  devolverTipoPorcentaje(porcentaje) {
+    let rentabilidadParseada = parseFloat(porcentaje);
+    if (rentabilidadParseada > 0) {
+      return 0;
+    } else {
+      return 1;
+    }
+  }
+
+  abrirActionShiiet() {
+    ActionSheet.show(
+      {
+        options: BUTTONS,
+        cancelButtonIndex: CANCEL_INDEX,
+        title: "Choose an option"
+      },
+      buttonIndex => {
+        console.log(buttonIndex);
+        switch (buttonIndex) {
+          case 0:
+            this.setState({ mostrarDescripcion: true });
+            break;
+          case 1:
+            break;
+
+          default:
+            break;
+        }
+      }
+    );
+  }
+
+  cerrarDetalles() {
+    this.setState({ mostrarDescripcion: false });
+  }
+
   render() {
     return (
       <Content>
-        <Card>
-          <CardItem header bordered>
-            <Row>
-              <Col size={6}>
-                <Row>
-                  <Thumbnail
-                    small={true}
-                    source={{
-                      uri: this.props.data.imagen
-                    }}
-                  />
-                  <Text style={estilos.textoGrueso}>
-                    {this.props.data.nombre}
+        <TouchableOpacity onPress={this.abrirActionShiiet}>
+          <Card transparent>
+            <CardItem header style={estilos.fondoCard}>
+              <Row>
+                <Col size={6}>
+                  <Row>
+                    <Thumbnail
+                      small={true}
+                      source={{
+                        uri: this.props.data.imagen
+                      }}
+                    />
+                    <Text style={estilos.textoGrueso}>
+                      {this.props.data.nombre}
+                    </Text>
+                  </Row>
+                </Col>
+                <Col size={4}>
+                  <Text style={estilos.textDerecha}>
+                    {this.props.data.precioActual}
                   </Text>
-                </Row>
-              </Col>
-              <Col size={4} >
-                <Text style={estilos.textoDerecha}>{this.props.data.precioActual}</Text>
-                <Text style={estilos.textoDerecha}>{this.props.data.porcentaje}</Text>
-              </Col>
-            </Row>
-          </CardItem>
-          <CardItem bordered>
-            <Body>
-              <VistaPreviaHistorico></VistaPreviaHistorico>
-            </Body>
-          </CardItem>
-        </Card>
+                  <Text
+                    style={this.pintarDependiendoDeRentabilidad(
+                      this.props.data.porcentaje
+                    )}
+                  >
+                    {this.props.data.porcentaje + "%"}
+                  </Text>
+                </Col>
+              </Row>
+            </CardItem>
+            <CardItem style={estilos.fondoCard}>
+              <VistaPreviaHistorico
+                idCripto={this.props.data.id}
+                tipoPorcentaje={this.devolverTipoPorcentaje(
+                  this.props.data.porcentaje
+                )}
+              ></VistaPreviaHistorico>
+            </CardItem>
+          </Card>
+        </TouchableOpacity>
+        {this.state.mostrarDescripcion ? (
+          <DetailsCryptoItem
+            idCripto={this.props.data.id}
+            cerrarDescripcion={this.cerrarDetalles}
+          ></DetailsCryptoItem>
+        ) : null}
       </Content>
     );
   }
