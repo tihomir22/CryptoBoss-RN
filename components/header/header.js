@@ -1,8 +1,16 @@
 import React, { Component } from "react";
-// import { connect } from "react-redux";
-// import { bindActionCreators } from "redux";
-// import * as headerActions from "../../store/header/actions";
-import { Content, Header, Body, Title, Button, Left, Icon } from "native-base";
+import {
+  Content,
+  Header,
+  Text,
+  Body,
+  Title,
+  Button,
+  Spinner,
+  Left,
+  Icon,
+  Right
+} from "native-base";
 import estilos from "./estilos";
 export default class HeaderItem extends Component {
   constructor(props) {
@@ -13,13 +21,14 @@ export default class HeaderItem extends Component {
     return (
       <Header style={estilos.header}>
         <Left>
-          <Button transparent>
+          <Button transparent onPress={this.props.abrirSidebar}>
             <Icon name="menu" />
           </Button>
         </Left>
         <Body>
           <Title style={estilos.headerTitle}>{this.props.titulo}</Title>
         </Body>
+        <Right>{this.props.activarSpinnerCarga ? <Spinner /> : null}</Right>
       </Header>
     );
   }

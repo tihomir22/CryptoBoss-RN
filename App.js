@@ -1,12 +1,32 @@
-import React from "react";
+import React, { Component } from "react";
 import { AppLoading } from "expo";
-import { Container, Root } from "native-base";
+import { Root } from "native-base";
 import * as Font from "expo-font";
 import { Ionicons } from "@expo/vector-icons";
-import ListITem from "./components/listItem";
-import HeaderItem from "./components/header/index";
+import MainScreen from "./screens/MainScreen";
+import { createAppContainer } from "react-navigation";
+import ConfigComp from "./components/configuracion/ConfigComp";
+import { createStackNavigator } from "react-navigation-stack";
+import WatchList from "./components/WatchList/WatchList";
 
-export default class App extends React.Component {
+const AppNavigator = createStackNavigator({
+  Home: {
+    screen: MainScreen,
+    navigationOptions: {
+      header: null
+    }
+  },
+  Config: {
+    screen: ConfigComp
+  },
+  WatchList: {
+    screen: WatchList
+  }
+});
+
+export const Navigator = createAppContainer(AppNavigator);
+
+export default class App extends Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -30,10 +50,7 @@ export default class App extends React.Component {
 
     return (
       <Root>
-        <Container>
-          <HeaderItem titulo={"CryptoBoss"}></HeaderItem>
-          <ListITem></ListITem>
-        </Container>
+        <Navigator></Navigator>
       </Root>
     );
   }

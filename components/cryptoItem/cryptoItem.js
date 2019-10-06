@@ -10,7 +10,10 @@ import {
   ActionSheet
 } from "native-base";
 import { Col, Row, Grid } from "react-native-easy-grid";
+import Axios from "axios-observable";
+import * as SecureStore from "expo-secure-store";
 import estilos from "./estilos";
+import StaticUtils from "../../StaticUtils";
 import VistaPreviaHistorico from "../graficos/vistaPreviaHistorico";
 import DetailsCryptoItem from "../DetailsCryptoItem/detailsCryptoItem";
 
@@ -20,26 +23,55 @@ export default class CryptoItem extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      mostrarDescripcion: false
+      mostrarDescripcion: false,
+      precios: [],
+      market_cap: [],
+      criptodivisa: this.props.data.id
     };
+
     this.abrirActionShiiet = this.abrirActionShiiet.bind(this);
     this.cerrarDetalles = this.cerrarDetalles.bind(this);
   }
 
-  pintarDependiendoDeRentabilidad(valor) {
-    if (this.devolverTipoPorcentaje(valor) == 0) {
-      return estilos.positivo;
-    } else {
-      return estilos.negativo;
-    }
+  componentDidMount() {
+    this.recuperarHistoricos();
   }
 
-  devolverTipoPorcentaje(porcentaje) {
-    let rentabilidadParseada = parseFloat(porcentaje);
-    if (rentabilidadParseada > 0) {
-      return 0;
-    } else {
-      return 1;
+  recuperarHistoricos() {
+    Axios.get(
+      "https://api.coingecko.com/api/v3/coins/" +
+        this.props.data.id +
+        "/market_chart?vs_currency=" +
+        this.props.currency +
+        "&days=" +
+        this.props.timeframe
+    ).subscribe(
+      response => {
+        this.setState({
+          precios: response.data.prices.map(precios => precios[1]),
+          market_cap: response.data.market_caps.map(
+            market_caps => market_caps[1]
+          )
+        });
+      },
+      error => this.setState({ error, loading: false })
+    );
+  }
+
+  async addToWatchList(criptoName) {
+    try {
+      SecureStore.getItemAsync("watchlist").then(watchlist => {
+        let c = watchlist ? JSON.parse(watchlist) : [];
+        if (c.indexOf(criptoName.toLowerCase()) == -1) {
+          c.push(criptoName.toLowerCase());
+          SecureStore.setItemAsync("watchlist", JSON.stringify(c));
+          console.log("añadido exitosamente");
+        } else {
+          console.log("ya existe esta wea");
+        }
+      });
+    } catch (error) {
+      console.log(error);
     }
   }
 
@@ -51,12 +83,12 @@ export default class CryptoItem extends Component {
         title: "Choose an option"
       },
       buttonIndex => {
-        console.log(buttonIndex);
         switch (buttonIndex) {
           case 0:
             this.setState({ mostrarDescripcion: true });
             break;
           case 1:
+            this.addToWatchList(this.props.data.nombre);
             break;
 
           default:
@@ -92,10 +124,13 @@ export default class CryptoItem extends Component {
                 </Col>
                 <Col size={4}>
                   <Text style={estilos.textDerecha}>
-                    {this.props.data.precioActual}
+                    {StaticUtils.formatNumber(
+                      this.props.data.precioActual,
+                      this.props.currency
+                    )}
                   </Text>
                   <Text
-                    style={this.pintarDependiendoDeRentabilidad(
+                    style={StaticUtils.pintarDependiendoDeRentabilidad(
                       this.props.data.porcentaje
                     )}
                   >
@@ -106,8 +141,8 @@ export default class CryptoItem extends Component {
             </CardItem>
             <CardItem style={estilos.fondoCard}>
               <VistaPreviaHistorico
-                idCripto={this.props.data.id}
-                tipoPorcentaje={this.devolverTipoPorcentaje(
+                data={this.state.precios}
+                tipoPorcentaje={StaticUtils.devolverTipoPorcentaje(
                   this.props.data.porcentaje
                 )}
               ></VistaPreviaHistorico>
@@ -116,8 +151,13 @@ export default class CryptoItem extends Component {
         </TouchableOpacity>
         {this.state.mostrarDescripcion ? (
           <DetailsCryptoItem
-            idCripto={this.props.data.id}
+            market_cap={this.state.market_cap}
+            data={this.props.data}
+            divisa={this.props.currency}
             cerrarDescripcion={this.cerrarDetalles}
+            tipoPorcentaje={StaticUtils.devolverTipoPorcentaje(
+              this.props.data.porcentaje
+            )}
           ></DetailsCryptoItem>
         ) : null}
       </Content>

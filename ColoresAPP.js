@@ -3,5 +3,7 @@ export default Colores = {
   secondary: "#292826",
   secondaryLighter: "#42413d",
   red: "#FF4136",
-  green: "#2ECC40"
+  redLighter: "#ff5147",
+  green: "#2ECC40",
+  greenLighter: "#48d559"
 };
