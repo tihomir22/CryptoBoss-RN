@@ -17,7 +17,6 @@ import StaticUtils from "../../StaticUtils";
 import VistaPreviaHistorico from "../graficos/vistaPreviaHistorico";
 import DetailsCryptoItem from "../DetailsCryptoItem/detailsCryptoItem";
 
-var BUTTONS = ["Look in depth", "Add to watchlist", "Cancel"];
 var CANCEL_INDEX = 2;
 export default class CryptoItem extends Component {
   constructor(props) {
@@ -25,6 +24,14 @@ export default class CryptoItem extends Component {
     this.state = {
       mostrarDescripcion: false,
       precios: [],
+      BUTTONS: [
+        "Look in depth",
+        this.props.permitirEliminar
+          ? "Delete from watchlist"
+          : "Add to watchlist",
+        "Cancel"
+      ],
+
       market_cap: [],
       criptodivisa: this.props.data.id
     };
@@ -65,9 +72,31 @@ export default class CryptoItem extends Component {
         if (c.indexOf(criptoName.toLowerCase()) == -1) {
           c.push(criptoName.toLowerCase());
           SecureStore.setItemAsync("watchlist", JSON.stringify(c));
-          console.log("añadido exitosamente");
+          StaticUtils.mostrarTostadita("Succesfully added", "Close");
         } else {
-          console.log("ya existe esta wea");
+          StaticUtils.mostrarTostadita(
+            "This crypto was already added!",
+            "Close"
+          );
+        }
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  async deleteFromWatchList(criptoName) {
+    try {
+      SecureStore.getItemAsync("watchlist").then(watchlist => {
+        let c = watchlist ? JSON.parse(watchlist) : [];
+        let indice = c.indexOf(criptoName.toLowerCase());
+        if (indice != -1) {
+          c = c.filter(item => item != criptoName.toLowerCase());
+          SecureStore.setItemAsync("watchlist", JSON.stringify(c));
+          StaticUtils.mostrarTostadita("Succesfully deleted", "Close");
+          this.props.setearNuevaLista(c);
+        } else {
+          console.log("no existe esta wea");
         }
       });
     } catch (error) {
@@ -78,7 +107,7 @@ export default class CryptoItem extends Component {
   abrirActionShiiet() {
     ActionSheet.show(
       {
-        options: BUTTONS,
+        options: this.state.BUTTONS,
         cancelButtonIndex: CANCEL_INDEX,
         title: "Choose an option"
       },
@@ -88,7 +117,9 @@ export default class CryptoItem extends Component {
             this.setState({ mostrarDescripcion: true });
             break;
           case 1:
-            this.addToWatchList(this.props.data.nombre);
+            this.props.permitirEliminar
+              ? this.deleteFromWatchList(this.props.data.nombre)
+              : this.addToWatchList(this.props.data.nombre);
             break;
 
           default:
@@ -131,10 +162,12 @@ export default class CryptoItem extends Component {
                   </Text>
                   <Text
                     style={StaticUtils.pintarDependiendoDeRentabilidad(
-                      this.props.data.porcentaje
+                      this.props.data.porcentajeReal
                     )}
                   >
-                    {this.props.data.porcentaje + "%"}
+                    {(this.props.data.porcentajeReal < 0 ? "" : "+") +
+                      this.props.data.porcentajeReal.toFixed(2) +
+                      "%"}
                   </Text>
                 </Col>
               </Row>
@@ -143,7 +176,7 @@ export default class CryptoItem extends Component {
               <VistaPreviaHistorico
                 data={this.state.precios}
                 tipoPorcentaje={StaticUtils.devolverTipoPorcentaje(
-                  this.props.data.porcentaje
+                  this.props.data.porcentajeReal
                 )}
               ></VistaPreviaHistorico>
             </CardItem>
@@ -156,7 +189,7 @@ export default class CryptoItem extends Component {
             divisa={this.props.currency}
             cerrarDescripcion={this.cerrarDetalles}
             tipoPorcentaje={StaticUtils.devolverTipoPorcentaje(
-              this.props.data.porcentaje
+              this.props.data.porcentajeReal
             )}
           ></DetailsCryptoItem>
         ) : null}

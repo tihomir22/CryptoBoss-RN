@@ -1,7 +1,7 @@
 import React, { Component } from "react";
 import axios from "axios";
 import CryptoItem from "../cryptoItem/";
-import { ScrollView } from "react-native";
+import { ScrollView, RefreshControl, SafeAreaView } from "react-native";
 import * as SecureStore from "expo-secure-store";
 import styles from "./estilos";
 
@@ -15,9 +15,17 @@ export default class listItem extends Component {
       error: null,
       tieneMas: true,
       timeframe: "timeframe:1",
-      currency: "currency:usd"
+      currency: "currency:usd",
+      refrescando: false
     };
     this.retrieveData(true);
+    this.refrescar = this.refrescar.bind(this);
+  }
+
+  componentWillReceiveProps(nextProps) {
+    if (nextProps.listaCriptosFiltradas) {
+      this.retrieveData(true);
+    }
   }
 
   async retrieveData(forzar) {
@@ -43,8 +51,7 @@ export default class listItem extends Component {
       }
       if (necesarioActualizarValores || forzar) {
         this.setState({ pagina_actual: 1 });
-        this.setState({ listadoCriptos: [] });
-        this.recuperarCriptos(this.returnFilteredListOfCoinsIfStorage());
+        this.recuperarCriptos(this.returnFilteredListOfCoinsIfStorage(), true);
       }
     } catch (error) {
       // Error retrieving data
@@ -60,7 +67,7 @@ export default class listItem extends Component {
     return this.props.listaCriptosFiltradas &&
       this.props.listaCriptosFiltradas.length > 0
       ? this.props.listaCriptosFiltradas
-      : null;
+      : [];
   }
 
   returnCsV(arrayParseado) {
@@ -70,18 +77,49 @@ export default class listItem extends Component {
         res = res + arrayParseado[i] + ",";
       }
     }
-
     return res.length > 0 ? "&ids=" + res : "";
   }
 
-  recuperarCriptos(listaCriptosIds) {
+  parsearValor(valorDesdeLocalStorage) {
+    if (valorDesdeLocalStorage == "1") {
+      return { nombreKey: "price_change_percentage_24h", valor: "1d" };
+    } else if (valorDesdeLocalStorage == "14") {
+      return {
+        nombreKey: "price_change_percentage_14d_in_currency",
+        valor: "14d"
+      };
+    } else if (valorDesdeLocalStorage == "30") {
+      return {
+        nombreKey: "price_change_percentage_30d_in_currency",
+        valor: "30d"
+      };
+    } else {
+      return {
+        nombreKey: "price_change_percentage_1y_in_currency",
+        valor: "1y"
+      };
+    }
+  }
+
+  recuperarCriptos(listaCriptosIds, reiniciar) {
     if (this.state.cargando) {
+      return;
+    }
+    if (
+      this.props.listaCriptosFiltradas &&
+      this.props.listaCriptosFiltradas.length == 0
+    ) {
       return;
     }
     this.setState({ cargando: true });
     if (this.props.estadoCarga) {
       this.props.estadoCarga(true);
     }
+    let valorResultanteParseado = this.parsearValor(
+      this.state.timeframe.split(":")[1]
+    );
+    console.log(valorResultanteParseado);
+
     axios
       .get(
         "https://api.coingecko.com/api/v3/coins/markets?vs_currency=" +
@@ -89,10 +127,14 @@ export default class listItem extends Component {
           this.returnCsV(listaCriptosIds) +
           "&order=market_cap_desc&per_page=25&page=" +
           this.state.pagina_actual +
-          "&sparkline=false"
+          "&sparkline=false&price_change_percentage=" +
+          valorResultanteParseado.valor
       )
       .then(response => {
-        this.actualizarEstado(response);
+        if (reiniciar) {
+          this.setState({ listadoCriptos: [] });
+        }
+        this.actualizarEstado(response, valorResultanteParseado.nombreKey);
       })
       .catch(error => {
         this.setState({ error, loading: false });
@@ -101,7 +143,7 @@ export default class listItem extends Component {
 
   componentWillMount() {}
 
-  actualizarEstado(respuesta) {
+  actualizarEstado(respuesta, nombreKeyEspecial) {
     if (this.props.estadoCarga) {
       this.props.estadoCarga(false);
     }
@@ -128,9 +170,15 @@ export default class listItem extends Component {
           respuesta.market_cap_change_percentage_24h,
         numero_market_cap: respuesta.market_cap_rank,
         roi: respuesta.roi,
-        volumenTotal: respuesta.total_volume
+        volumenTotal: respuesta.total_volume,
+        porcentajeReal:
+          respuesta[nombreKeyEspecial] != null
+            ? respuesta[nombreKeyEspecial]
+            : 0
       };
     });
+
+    console.log(listadoCriptosSiguiente);
 
     this.setState({
       tieneMas:
@@ -142,7 +190,8 @@ export default class listItem extends Component {
         ...listadoCriptosSiguiente
       ],
       cargando: false,
-      pagina_actual: this.state.pagina_actual + 1
+      pagina_actual: this.state.pagina_actual + 1,
+      refrescando: false
     });
   }
 
@@ -153,27 +202,42 @@ export default class listItem extends Component {
     );
   }
 
+  refrescar() {
+    this.setState({ refrescando: true });
+    this.retrieveData(true);
+  }
+
   devolverLista() {
     return (
-      <ScrollView
-        style={styles.negroClaro}
-        onScroll={({ nativeEvent }) => {
-          if (this.isCloseToBottom(nativeEvent) && this.state.tieneMas) {
-            this.recuperarCriptos(this.returnFilteredListOfCoinsIfStorage());
+      <SafeAreaView style={styles.negroClaro}>
+        <ScrollView
+          style={styles.negroClaro}
+          refreshControl={
+            <RefreshControl
+              refreshing={this.state.refrescando}
+              onRefresh={this.refrescar}
+            />
           }
-        }}
-      >
-        {this.state.listadoCriptos.map(item => {
-          return (
-            <CryptoItem
-              timeframe={this.state.timeframe.split(":")[1]}
-              currency={this.state.currency.split(":")[1]}
-              data={item}
-              key={item.id}
-            ></CryptoItem>
-          );
-        })}
-      </ScrollView>
+          onScroll={({ nativeEvent }) => {
+            if (this.isCloseToBottom(nativeEvent) && this.state.tieneMas) {
+              this.recuperarCriptos(this.returnFilteredListOfCoinsIfStorage());
+            }
+          }}
+        >
+          {this.state.listadoCriptos.map(item => {
+            return (
+              <CryptoItem
+                setearNuevaLista={this.props.setearNuevaLista}
+                timeframe={this.state.timeframe.split(":")[1]}
+                currency={this.state.currency.split(":")[1]}
+                permitirEliminar={this.props.permitirEliminar}
+                data={item}
+                key={item.id}
+              ></CryptoItem>
+            );
+          })}
+        </ScrollView>
+      </SafeAreaView>
     );
   }
 

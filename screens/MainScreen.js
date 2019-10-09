@@ -6,6 +6,21 @@ import ListITem from "../components/listItem/index";
 import PantallaCarga from "../components/PantallaCarga/PantallaCarga";
 import Sidebar from "../components/sidebar/Sidebar";
 import Drawer from "react-native-drawer";
+import ColoresAPP from "../ColoresAPP";
+
+const drawerStyles = {
+  drawer: {
+    shadowColor: "#000000",
+    backgroundColor: ColoresAPP.secondary,
+    shadowOpacity: 0.8,
+    shadowRadius: 3,
+    padding: 0,
+    margin: 0
+  },
+  drawerOverlay: {   },
+  mainOverlay: {   },
+  main: {  backgroundColor: ColoresAPP.secondary, }
+};
 class MainScreen extends Component {
   constructor(props) {
     super(props);
@@ -46,10 +61,13 @@ class MainScreen extends Component {
       <Drawer
         ref="myDrawer"
         type="static"
+        styles={drawerStyles}
         content={
           <Sidebar
+            style={{ padding: 0, margin: 0 }}
             abrirConfig={() => this.props.navigation.navigate("Config")}
             abrirWatchlist={() => this.props.navigation.navigate("WatchList")}
+            abrirDonations={() => this.props.navigation.navigate("Donations")}
           />
         }
         openDrawerOffset={100}

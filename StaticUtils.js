@@ -1,3 +1,6 @@
+import { Container, Header, Content, Toast, Button, Text } from 'native-base';
+
+
 export default class StaticUtils {
   static positivo = {
     textAlign: "right",
@@ -8,6 +11,13 @@ export default class StaticUtils {
     textAlign: "right",
     color: "red"
   };
+
+  static mostrarTostadita(mensaje,textoBoton){
+    Toast.show({
+      text: mensaje,
+      buttonText: textoBoton
+    })
+  }
 
   static formatNumber(num, divisa) {
     let sufijo = "$";
@@ -22,7 +32,10 @@ export default class StaticUtils {
     } else {
       sufijo = "";
     }
-    return num.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, "$&,") + sufijo;
+    return (
+      num.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, "$&,") +
+      sufijo
+    );
   }
 
   static pintarDependiendoDeRentabilidad(valor) {

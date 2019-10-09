@@ -25,6 +25,23 @@ export default class DetailsCryptoItem extends Component {
     this.state = {};
   }
 
+  calcularCambioMarketCapRealCapital() {
+    let res =
+      this.props.market_cap[this.props.market_cap.length - 1] -
+      this.props.market_cap[0];
+    return res;
+  }
+
+  calcularCambioMarketCapRealPorcentaje() {
+    let res =
+      ((this.props.market_cap[this.props.market_cap.length - 1] -
+        this.props.market_cap[0]) /
+        this.props.market_cap[this.props.market_cap.length - 1]) *
+      100.0;
+
+    return res;
+  }
+
   render() {
     return (
       <Content style={estilos.globalBackground}>
@@ -43,20 +60,25 @@ export default class DetailsCryptoItem extends Component {
               <Col size={6}>
                 <Text
                   style={StaticUtils.pintarDependiendoDeRentabilidad(
-                    this.props.data.cambio_market_cap_24h_porcentaje
+                    this.props.data.porcentajeReal
                   )}
                 >
-                  {StaticUtils.formatNumber(
-                    this.props.data.cambio_market_cap_24h,
-                    this.props.divisa
-                  )}
+                  {(this.calcularCambioMarketCapRealCapital() < 0 ? "" : "+") +
+                    StaticUtils.formatNumber(
+                      this.calcularCambioMarketCapRealCapital(),
+                      this.props.divisa
+                    )}
                 </Text>
                 <Text
                   style={StaticUtils.pintarDependiendoDeRentabilidad(
-                    this.props.data.cambio_market_cap_24h_porcentaje
+                    this.calcularCambioMarketCapRealPorcentaje()
                   )}
                 >
-                  {this.props.data.cambio_market_cap_24h_porcentaje + "%"}
+                  {(this.calcularCambioMarketCapRealPorcentaje() < 0
+                    ? ""
+                    : "+") +
+                    this.calcularCambioMarketCapRealPorcentaje().toFixed(2) +
+                    "%"}
                 </Text>
               </Col>
             </Row>

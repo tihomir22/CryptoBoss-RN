@@ -1,19 +1,40 @@
 import React, { Component } from "react";
-
-import { Container, Header, Content, List, ListItem, Text } from "native-base";
-
-import PropTypes from "prop-types"; //ES6
-
+import { Col, Row, Grid } from "react-native-easy-grid";
+import {
+  Container,
+  Header,
+  Content,
+  List,
+  ListItem,
+  Text,
+  Card,
+  Thumbnail,
+  CardItem,
+  Body
+} from "native-base";
+import { Image,View } from "react-native";
+import estilos from "./estilos";
 class Sidebar extends Component {
   constructor(props) {
     super(props);
-    this.state = {};
+    this.state = {
+      image: "../../logoCryptoBoss.png"
+    };
   }
 
   render() {
     return (
       <Container>
-        <Header />
+        <CardItem style={estilos.darkBackGround}>
+          <Body style={estilos.container}>
+            <Image
+              style={estilos.logo}
+              source={require("../../logoCryptoBoss.png")}
+            />
+            <Text style={estilos.goldenText}>CryptoBoss - The smartest fox</Text>
+          </Body>
+        </CardItem>
+
         <Content>
           <List>
             <ListItem onPress={this.props.abrirConfig}>
@@ -22,11 +43,12 @@ class Sidebar extends Component {
             <ListItem onPress={this.props.abrirWatchlist}>
               <Text>Watchlist</Text>
             </ListItem>
-            <ListItem>
-              <Text>Donate</Text>
-            </ListItem>
           </List>
         </Content>
+        <Text style={estilos.goldenTextSecondary}>Proudly powered by</Text>
+        <View style={estilos.containerImg}>
+          <Thumbnail small source={require("./gecko.png")} />
+        </View>
       </Container>
     );
   }

@@ -8,7 +8,8 @@ import { createAppContainer } from "react-navigation";
 import ConfigComp from "./components/configuracion/ConfigComp";
 import { createStackNavigator } from "react-navigation-stack";
 import WatchList from "./components/WatchList/WatchList";
-
+import Colores from "./ColoresAPP";
+import PantallaCarga from "./components/PantallaCarga/PantallaCarga";
 const AppNavigator = createStackNavigator({
   Home: {
     screen: MainScreen,
@@ -17,11 +18,35 @@ const AppNavigator = createStackNavigator({
     }
   },
   Config: {
-    screen: ConfigComp
+    screen: ConfigComp,
+    navigationOptions: {
+      title: "Configuration",
+      headerTintColor: Colores.primary,
+      headerStyle: {
+        backgroundColor: Colores.secondary,
+        borderBottomColor: Colores.secondaryLighter,
+        borderBottomWidth: 3
+      },
+      headerTitleStyle: {
+        fontSize: 18
+      }
+    }
   },
   WatchList: {
-    screen: WatchList
-  }
+    screen: WatchList,
+    navigationOptions: {
+      title: "Watchlist",
+      headerTintColor: Colores.primary,
+      headerStyle: {
+        backgroundColor: Colores.secondary,
+        borderBottomColor: Colores.secondaryLighter,
+        borderBottomWidth: 3
+      },
+      headerTitleStyle: {
+        fontSize: 18
+      }
+    }
+  },
 });
 
 export const Navigator = createAppContainer(AppNavigator);
@@ -45,7 +70,7 @@ export default class App extends Component {
 
   render() {
     if (!this.state.isReady) {
-      return <AppLoading />;
+      return <PantallaCarga />;
     }
 
     return (

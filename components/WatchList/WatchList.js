@@ -1,9 +1,9 @@
 import React, { Component } from "react";
-import { Text } from "native-base";
 import * as SecureStore from "expo-secure-store";
-import axios from "axios";
-import PropTypes from "prop-types"; //ES6
 import ListItem from "../listItem/index";
+import StaticUtils from "../../StaticUtils";
+import { Container, Toast } from "native-base";
+import Colores from "../../ColoresAPP";
 
 class WatchList extends Component {
   constructor(props) {
@@ -12,23 +12,40 @@ class WatchList extends Component {
       ids: []
     };
     this.recuperarCriptosVigiladas();
+    this.setearNuevaLista = this.setearNuevaLista.bind(this);
+  }
+
+  setearNuevaLista(lista) {
+    this.setState({ ids: lista });
   }
 
   async recuperarCriptosVigiladas() {
-    console.log("vamos a checkearnos");
     try {
       const watchlist = await SecureStore.getItemAsync("watchlist");
-      if (watchlist != null) {
-        this.setState({ ids: JSON.parse(watchlist) });
-        console.log(this.state.ids);
+      let watchlist2 = JSON.parse(watchlist);
+      if (watchlist2 != null && watchlist2.length > 0) {
+        this.setState({ ids: watchlist2 });
       } else {
-        console.log("No hay nada");
+        Toast.show({
+          text: "Your watchlist is empty!",
+          buttonText: "Okay",
+          type: "danger",
+          duration: 100000
+        });
       }
     } catch (error) {}
   }
 
   render() {
-    return <ListItem listaCriptosFiltradas={this.state.ids}></ListItem>;
+    return (
+      <Container style={{ backgroundColor: Colores.secondary }}>
+        <ListItem
+          setearNuevaLista={this.setearNuevaLista}
+          listaCriptosFiltradas={this.state.ids}
+          permitirEliminar={true}
+        ></ListItem>
+      </Container>
+    );
   }
 }
 
